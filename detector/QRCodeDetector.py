@@ -8,6 +8,7 @@ class QRCodeDetector:
         self.__image_copy = self.__image.copy()
         self.__point_info: list = []
         self.__position_angles: list = []
+        self.__is_sorted = False
         self.__preprocess()
         self.__getRelativeArea()
         self.__getPositionAngle()
@@ -56,45 +57,35 @@ class QRCodeDetector:
             (_x, _y), (_w, _h), angle = cv2.minAreaRect(children_contours[3])
             inner_contour_area: float = float(_w * _h)
 
+            if outer_contour_area == 0 or mid_contour_area == 0 or inner_contour_area == 0:
+                return
+
             ratio1: float = outer_contour_area / mid_contour_area
             ratio2: float = outer_contour_area / inner_contour_area
             ratio3: float = mid_contour_area / inner_contour_area
             # print(ratio1, ratio2, ratio3)
             if 1.90 < ratio1 < 2.30 and 2.45 < ratio3 < 3.00:
                 self.__position_angles.append((x, y, w, h))
-        # print()
 
     def getImage(self) -> np.ndarray:
-        return self.__image
+        return self.__image.copy()
     
-    def getPoints(self) ->list:
-        return self.__position_angles
     
     def markQRCode(self, line_color=(0, 0, 255)) -> np.ndarray:
+        
         if len(self.__position_angles) < 3:
             return self.__image_copy.copy()
-        # Calculate the minimum bounding box that covers all the black squares' centers
-        x1, x2, _, _ = self.__position_angles[0]
-        x3, x4, _, _ = self.__position_angles[1]
-        x5, x6, _, _ = self.__position_angles[2]
-        x1, x2 = int(x1), int(x2)
-        x3, x4 = int(x3), int(x4)
-        x5, x6 = int(x5), int(x6)
-        # Draw three lines to connnect thrss points
-        self.__image_copy = cv2.line(self.__image_copy, (x1, x2), (x3, x4), line_color, thickness=2)
-        self.__image_copy = cv2.line(self.__image_copy, (x1, x2), (x5, x6), line_color, thickness=2)
-        self.__image_copy = cv2.line(self.__image_copy, (x3, x4), (x5, x6), line_color, thickness=2)
+        if self.__is_sorted == False:
+            self.__position_angles.sort()
+            self.__is_sorted = True
+        for i in range(0, len(self.__position_angles) - 2, 3):
+            x1, x2, _, _ = self.__position_angles[i]
+            x3, x4, _, _ = self.__position_angles[i + 1]
+            x5, x6, _, _ = self.__position_angles[i + 2]
+            self.__image_copy: np.ndarray = cv2.line(self.__image_copy, (int(x1), int(x2)), (int(x3), int(x4)), line_color, thickness=2)
+            self.__image_copy: np.ndarray = cv2.line(self.__image_copy, (int(x1), int(x2)), (int(x5), int(x6)), line_color, thickness=2)
+            self.__image_copy: np.ndarray = cv2.line(self.__image_copy, (int(x3), int(x4)), (int(x5), int(x6)), line_color, thickness=2)
+        
         return self.__image_copy.copy()
 
-if __name__ == "__main__":
-    for i in range(11):
-        img:np.ndarray = cv2.imread("./images/qrcode{}.png".format(i + 1), cv2.IMREAD_COLOR)
-        
-        detector = QRCodeDetector("./images/qrcode{}.png".format(i + 1))
-        image = detector.getImage()
-        angle_info = detector.getPoints()
-        
-        for (x, y, w, h) in angle_info:
-            img = cv2.circle(img, (int(x), int(y)), 5, (234, 63, 247), thickness=1)
-        img = detector.markQRCode()
-        showImage(img)
+
