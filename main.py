@@ -18,7 +18,7 @@ def main() -> None:
     generator.generate(3, (123, 234, 96), (123, 123, 123))
 
     # Image path. Replace this path as you needed.
-    image_path = "./images/qrcode5.png"
+    image_path = "./images/qrcode1.png"
     # Declare a QRCodeDetector object
     detector = QRCodeDetector(image_path)
 

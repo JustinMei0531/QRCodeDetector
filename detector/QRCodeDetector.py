@@ -59,7 +59,6 @@ class QRCodeDetector:
 
             if outer_contour_area == 0 or mid_contour_area == 0 or inner_contour_area == 0:
                 return
-
             ratio1: float = outer_contour_area / mid_contour_area
             ratio2: float = outer_contour_area / inner_contour_area
             ratio3: float = mid_contour_area / inner_contour_area
@@ -72,7 +71,6 @@ class QRCodeDetector:
     
     
     def markQRCode(self, line_color=(0, 0, 255)) -> np.ndarray:
-        
         if len(self.__position_angles) < 3:
             return self.__image_copy.copy()
         if self.__is_sorted == False:
